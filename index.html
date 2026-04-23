@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stop or Simplify</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  .bg-shapes {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; overflow: hidden;
+  }
+  .bg-shapes .shape {
+    position: absolute; border-radius: 50%; opacity: 0.08;
+    animation: floatShape 20s ease-in-out infinite;
+  }
+  .bg-shapes .shape:nth-child(1) { width: 300px; height: 300px; background: #fff; top: 10%; left: -5%; }
+  .bg-shapes .shape:nth-child(2) { width: 200px; height: 200px; background: #ffd700; top: 60%; right: -3%; animation-delay: -5s; }
+  .bg-shapes .shape:nth-child(3) { width: 150px; height: 150px; background: #ff6b6b; top: 30%; right: 20%; animation-delay: -10s; }
+  .bg-shapes .shape:nth-child(4) { width: 250px; height: 250px; background: #48dbfb; bottom: 5%; left: 15%; animation-delay: -15s; }
+  .bg-shapes .shape:nth-child(5) { width: 180px; height: 180px; background: #ff9ff3; top: 5%; right: 40%; animation-delay: -8s; }
+
+  @keyframes floatShape {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(30px, -30px) rotate(5deg); }
+    50% { transform: translate(-20px, 20px) rotate(-3deg); }
+    75% { transform: translate(15px, 10px) rotate(2deg); }
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 900px; margin: 0 auto;
+    padding: 30px 20px 60px; text-align: center;
+  }
+
+  .header { margin-bottom: 10px; }
+  .header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.6rem; color: #fff;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.15);
+    margin-bottom: 8px;
+    animation: bounceIn 0.8s ease-out;
+  }
+  .header .subtitle {
+    font-size: 1.1rem; color: rgba(255,255,255,0.9);
+    font-weight: 600; max-width: 650px;
+    margin: 0 auto 10px; line-height: 1.5;
+  }
+  .header .guiding-question {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem; color: #ffd700;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    margin-bottom: 6px;
+  }
+
+  @keyframes bounceIn {
+    0% { transform: scale(0.3) translateY(-40px); opacity: 0; }
+    50% { transform: scale(1.05); opacity: 1; }
+    70% { transform: scale(0.95); }
+    100% { transform: scale(1) translateY(0); }
+  }
+
+  /* Mode selector tabs */
+  .mode-tabs {
+    display: flex; gap: 0;
+    max-width: 500px; margin: 20px auto 0;
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .mode-tab {
+    flex: 1; padding: 16px 20px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.05rem; border: none; cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .mode-tab.trash {
+    background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7);
+  }
+  .mode-tab.trash.active {
+    background: #e74c3c; color: #fff;
+  }
+  .mode-tab.dial {
+    background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7);
+  }
+  .mode-tab.dial.active {
+    background: #3498db; color: #fff;
+  }
+  .mode-tab .tab-icon { font-size: 1.3rem; }
+
+  /* Animation scenes */
+  .animation-area {
+    position: relative;
+    height: 220px;
+    margin: 20px auto 10px;
+    max-width: 500px;
+  }
+
+  /* TRASH CAN */
+  .trash-scene {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; align-items: flex-end; justify-content: center;
+    transition: opacity 0.4s ease;
+  }
+  .trash-scene.hidden { opacity: 0; pointer-events: none; }
+
+  .trash-can {
+    position: relative; width: 120px; cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  .trash-can:hover { transform: scale(1.05); }
+  .trash-can:hover .lid { transform: rotate(-25deg) translateY(-5px); }
+  .trash-can .lid {
+    width: 130px; height: 18px;
+    background: linear-gradient(180deg, #8e8e8e, #6d6d6d);
+    border-radius: 6px 6px 2px 2px;
+    margin: 0 auto; position: relative; left: -5px;
+    transform-origin: right bottom;
+    transition: transform 0.4s ease; z-index: 2;
+  }
+  .trash-can .lid-handle {
+    width: 40px; height: 8px; background: #555;
+    border-radius: 4px; margin: 0 auto;
+    position: relative; top: -4px; left: -5px; z-index: 3;
+  }
+  .trash-can .can-body {
+    width: 120px; height: 140px;
+    background: linear-gradient(180deg, #7d7d7d, #5a5a5a);
+    border-radius: 4px 4px 12px 12px;
+    position: relative; overflow: hidden;
+    box-shadow: inset -8px 0 15px rgba(0,0,0,0.15), 3px 5px 15px rgba(0,0,0,0.3);
+  }
+  .trash-can .can-body::before {
+    content: ''; position: absolute;
+    top: 15px; bottom: 15px; left: 25px;
+    width: 3px; background: rgba(0,0,0,0.15); border-radius: 2px;
+  }
+  .trash-can .can-body::after {
+    content: ''; position: absolute;
+    top: 15px; bottom: 15px; left: 55px;
+    width: 3px; background: rgba(0,0,0,0.15); border-radius: 2px;
+  }
+  .trash-line-3 {
+    position: absolute; top: 15px; bottom: 15px; left: 85px;
+    width: 3px; background: rgba(0,0,0,0.15); border-radius: 2px;
+  }
+  .trash-can.open .lid { transform: rotate(-45deg) translateY(-10px); }
+  @keyframes trashWobble {
+    0% { transform: rotate(0deg); }
+    15% { transform: rotate(-8deg); }
+    30% { transform: rotate(6deg); }
+    45% { transform: rotate(-4deg); }
+    60% { transform: rotate(2deg); }
+    100% { transform: rotate(0deg); }
+  }
+  .trash-can.wobble { animation: trashWobble 0.6s ease-in-out; }
+
+  /* DIAL */
+  .dial-scene {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.4s ease;
+  }
+  .dial-scene.hidden { opacity: 0; pointer-events: none; }
+
+  .dial-container {
+    position: relative; width: 260px; height: 210px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dial-ring {
+    position: relative; width: 160px; height: 160px;
+  }
+  .dial-outer {
+    width: 160px; height: 160px;
+    background: linear-gradient(145deg, #4a4a6a, #2d2d48);
+    border-radius: 50%;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dial-inner {
+    width: 110px; height: 110px;
+    background: linear-gradient(145deg, #3a3a55, #252540);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 3px 10px rgba(0,0,0,0.3);
+  }
+  .dial-knob {
+    width: 60px; height: 60px;
+    background: linear-gradient(145deg, #777, #444);
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.2);
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .dial-knob::after {
+    content: ''; position: absolute;
+    top: 5px; left: 50%; transform: translateX(-50%);
+    width: 4px; height: 18px;
+    background: #48dbfb; border-radius: 2px;
+    box-shadow: 0 0 6px rgba(72, 219, 251, 0.6);
+  }
+  /* Tick marks around the dial */
+  .dial-ticks {
+    position: absolute; top: 0; left: 0;
+    width: 160px; height: 160px;
+  }
+  .dial-tick {
+    position: absolute;
+    width: 2px; height: 10px;
+    background: rgba(255,255,255,0.3);
+    left: 50%; top: 4px;
+    transform-origin: 50% 76px;
+    border-radius: 1px;
+  }
+  .dial-tick.major { height: 14px; width: 3px; background: rgba(255,255,255,0.6); }
+  /* Numbers positioned OUTSIDE the dial ring */
+  .dial-numbers {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .dial-number {
+    position: absolute;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem; color: rgba(255,255,255,0.85);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+  }
+  .dial-number-10 { top: -2px; left: 50%; transform: translateX(-50%); color: #ff6b6b; font-size: 1.15rem; }
+  .dial-number-8 { top: 18px; right: 10px; }
+  .dial-number-6 { top: 50%; right: -2px; transform: translateY(-50%); }
+  .dial-number-4 { bottom: 18px; right: 10px; }
+  .dial-number-2 { bottom: -2px; left: 50%; transform: translateX(-50%); }
+  .dial-number-0 { bottom: 18px; left: 10px; }
+
+  .dial-label {
+    position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem; color: rgba(255,255,255,0.8);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    white-space: nowrap;
+  }
+  .dial-value {
+    position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.4rem; color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+  }
+
+  @keyframes dialPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  .dial-container.pulse { animation: dialPulse 0.5s ease; }
+
+  /* Flying paper */
+  .flying-paper {
+    position: fixed;
+    width: 60px; height: 70px;
+    background: #fff; border-radius: 4px;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    padding: 6px; font-size: 8px; color: #666;
+    text-align: center; overflow: hidden; line-height: 1.2;
+  }
+  .flying-paper::before {
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 15px; height: 15px;
+    background: linear-gradient(135deg, transparent 50%, #e0e0e0 50%);
+  }
+
+  /* Confetti */
+  .confetti-container {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; z-index: 999; overflow: hidden;
+  }
+  .confetti-piece { position: absolute; width: 10px; height: 10px; opacity: 0; }
+
+  /* Counter badges */
+  .counter-row {
+    display: flex; gap: 12px; justify-content: center;
+    flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .counter-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50px; padding: 6px 18px;
+    color: #fff; font-weight: 700; font-size: 0.85rem;
+  }
+  .counter-badge.bump { animation: bumpBadge 0.5s ease; }
+  @keyframes bumpBadge { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+  /* Input area */
+  .input-area {
+    background: rgba(255,255,255,0.95);
+    border-radius: 20px; padding: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px);
+    transition: border-color 0.3s ease;
+    border: 3px solid transparent;
+  }
+  .input-area.trash-mode { border-color: #e74c3c; }
+  .input-area.dial-mode { border-color: #3498db; }
+
+  .input-area h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem; color: #5b4a9e;
+    margin-bottom: 5px;
+  }
+  .input-area .mode-hint {
+    font-size: 0.85rem; color: #999;
+    margin-bottom: 14px; line-height: 1.4;
+  }
+  .input-area .form-fields {
+    display: flex; gap: 12px; margin-bottom: 12px;
+    flex-wrap: wrap; justify-content: center;
+  }
+  .input-area .field-row {
+    flex: 1; min-width: 200px; text-align: left;
+  }
+  .input-area .field-row label {
+    display: block; font-size: 0.82rem;
+    color: #999; margin-bottom: 3px;
+  }
+  .input-area .field-row input,
+  .input-area .field-row textarea {
+    width: 100%; padding: 12px 16px;
+    border: 3px solid #e0d4f5; border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 0.95rem;
+    outline: none; transition: border-color 0.3s, box-shadow 0.3s;
+    background: #fff; color: #333; resize: none;
+  }
+  .input-area .field-row input:focus,
+  .input-area .field-row textarea:focus {
+    border-color: #764ba2;
+    box-shadow: 0 0 0 4px rgba(118, 75, 162, 0.15);
+  }
+  .input-area .input-row {
+    display: flex; gap: 12px;
+    align-items: stretch; flex-wrap: wrap; justify-content: center;
+  }
+  .input-area textarea { flex: 1; min-width: 250px; padding: 14px 16px; }
+  .submit-status {
+    margin-top: 8px; font-size: 0.85rem; min-height: 18px;
+  }
+  .submit-status.error { color: #e74c3c; font-weight: 600; }
+  .submit-status.saving { color: #999; }
+
+  .toss-btn {
+    color: white; border: none;
+    padding: 14px 28px; border-radius: 12px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.05rem; cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+  }
+  .toss-btn.trash-style {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    box-shadow: 0 4px 15px rgba(238, 90, 36, 0.4);
+  }
+  .toss-btn.dial-style {
+    background: linear-gradient(135deg, #48dbfb, #0abde3);
+    box-shadow: 0 4px 15px rgba(10, 189, 227, 0.4);
+  }
+  .toss-btn:hover { transform: translateY(-2px); }
+  .toss-btn:active { transform: translateY(0); }
+  .toss-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Context field (dial mode only) */
+  .context-field {
+    margin-top: 10px;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+  }
+  .context-field.show {
+    max-height: 120px;
+    opacity: 1;
+    margin-top: 12px;
+  }
+
+  /* Recent tosses */
+  .recent-tosses {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px; padding: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .recent-tosses h3 {
+    font-family: 'Fredoka One', cursive;
+    color: #fff; font-size: 1rem; margin-bottom: 10px;
+  }
+  .toss-list {
+    display: flex; flex-wrap: wrap;
+    gap: 8px; justify-content: center;
+  }
+  .toss-chip {
+    padding: 5px 14px; border-radius: 50px;
+    font-size: 0.8rem; font-weight: 600;
+    animation: chipIn 0.4s ease-out;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .toss-chip.trash-chip {
+    background: rgba(231, 76, 60, 0.3); color: #ffcdd2;
+    text-decoration: line-through;
+    text-decoration-color: rgba(255,255,255,0.4);
+  }
+  .toss-chip.dial-chip {
+    background: rgba(52, 152, 219, 0.3); color: #bbdefb;
+  }
+  .toss-chip .chip-icon { font-size: 0.9rem; }
+  @keyframes chipIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+  /* Success message */
+  .success-msg {
+    position: fixed; top: 20px; left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    color: white; padding: 12px 30px;
+    border-radius: 50px; font-weight: 700; font-size: 1rem;
+    z-index: 1001;
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  .success-msg.trash-msg { background: #e74c3c; box-shadow: 0 4px 20px rgba(231,76,60,0.4); }
+  .success-msg.dial-msg { background: #3498db; box-shadow: 0 4px 20px rgba(52,152,219,0.4); }
+  .success-msg.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 600px) {
+    .header h1 { font-size: 2rem; }
+    .header .guiding-question { font-size: 1.1rem; }
+    .input-area { padding: 18px; }
+    .input-area .input-row { flex-direction: column; }
+    .toss-btn { width: 100%; }
+    .animation-area { height: 180px; }
+    .dial-container { width: 220px; height: 180px; }
+    .dial-ring { width: 130px; height: 130px; }
+    .dial-outer { width: 130px; height: 130px; }
+    .dial-inner { width: 90px; height: 90px; }
+    .dial-knob { width: 48px; height: 48px; }
+    .mode-tab { font-size: 0.9rem; padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-shapes">
+  <div class="shape"></div><div class="shape"></div><div class="shape"></div>
+  <div class="shape"></div><div class="shape"></div>
+</div>
+
+<div class="confetti-container" id="confettiContainer"></div>
+<div class="success-msg" id="successMsg"></div>
+
+<div class="container">
+  <div class="header">
+    <h1>Stop or Simplify</h1>
+    <p class="subtitle">As we head into summer planning, help us focus on what truly matters. We want to hear from you: what should we stop doing, and where are we overinvesting effort?</p>
+    <p class="guiding-question">"What MUST we do?" — If it's not that, let's rethink it.</p>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab trash active" id="trashTab" onclick="setMode('trash')">
+      <span class="tab-icon">&#x1F5D1;</span> Trash It
+    </button>
+    <button class="mode-tab dial" id="dialTab" onclick="setMode('dial')">
+      <span class="tab-icon">&#x1F50A;</span> Dial It Back
+    </button>
+  </div>
+
+  <div class="animation-area">
+    <div class="trash-scene" id="trashScene">
+      <div class="trash-can" id="trashCan">
+        <div class="lid-handle"></div>
+        <div class="lid"></div>
+        <div class="can-body"><div class="trash-line-3"></div></div>
+      </div>
+    </div>
+    <div class="dial-scene hidden" id="dialScene">
+      <div class="dial-container" id="dialContainer">
+        <div class="dial-value" id="dialValue">10</div>
+        <div class="dial-ring">
+          <div class="dial-outer">
+            <div class="dial-inner">
+              <div class="dial-knob" id="dialKnob"></div>
+            </div>
+          </div>
+          <div class="dial-numbers">
+            <span class="dial-number dial-number-10">10</span>
+            <span class="dial-number dial-number-8">8</span>
+            <span class="dial-number dial-number-6">6</span>
+            <span class="dial-number dial-number-4">4</span>
+            <span class="dial-number dial-number-2">2</span>
+            <span class="dial-number dial-number-0">0</span>
+          </div>
+        </div>
+        <div class="dial-label">Effort Level</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="counter-row">
+    <div class="counter-badge" id="trashCounter">Trashed: <span id="trashCount">0</span></div>
+    <div class="counter-badge" id="dialCounter">Dialed back: <span id="dialCount">0</span></div>
+  </div>
+
+  <div class="input-area trash-mode" id="inputArea">
+    <h2 id="inputTitle">What should we stop doing?</h2>
+    <p class="mode-hint" id="modeHint">Something we do as a faculty that isn't necessary anymore? Toss it in the trash.</p>
+    <div class="form-fields">
+      <div class="field-row">
+        <label for="nameInput">Your name (optional)</label>
+        <input type="text" id="nameInput" placeholder="Anonymous is fine!">
+      </div>
+    </div>
+    <div class="input-row">
+      <textarea id="ideaInput" rows="2" placeholder="e.g. 'Weekly reports that nobody reads...'" id="ideaInput"></textarea>
+      <button class="toss-btn trash-style" id="submitBtn">Toss It!</button>
+    </div>
+    <div class="context-field" id="contextField">
+      <div class="field-row">
+        <label for="contextInput">How could we simplify this? (optional)</label>
+        <textarea id="contextInput" rows="2" placeholder="e.g. 'A short email update instead of a formal report would work just as well...'"></textarea>
+      </div>
+    </div>
+    <div class="submit-status" id="submitStatus"></div>
+  </div>
+
+  <div class="recent-tosses" id="recentTosses" style="display:none;">
+    <h3>Recent Submissions</h3>
+    <div class="toss-list" id="tossList"></div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW
+  // ============================================================
+  var APPS_SCRIPT_URL = 'AKfycbyyoBcdok7RVRrj5ki3oyG_8ua15Ux-m3NAdvaNGSSjNSkS70EWEBkq_GhNLcN05PR2';
+  // ============================================================
+
+  var currentMode = 'trash';
+  var trashCount = 0;
+  var dialCount = 0;
+
+  var trashMessages = [
+    "Into the trash it goes!",
+    "Bye bye!", "Poof! Gone!",
+    "Good riddance!", "One less thing!",
+    "See ya never!", "Direct hit!",
+    "Trashed!", "Freedom!"
+  ];
+
+  var dialMessages = [
+    "Dialed it down!",
+    "Less is more!",
+    "Simplified!",
+    "Turned it down a notch!",
+    "Smart move!",
+    "Easing off the gas!",
+    "Right-sized!",
+    "That's more like it!"
+  ];
+
+  function setMode(mode) {
+    currentMode = mode;
+    var trashTab = document.getElementById('trashTab');
+    var dialTab = document.getElementById('dialTab');
+    var trashScene = document.getElementById('trashScene');
+    var dialScene = document.getElementById('dialScene');
+    var inputArea = document.getElementById('inputArea');
+    var inputTitle = document.getElementById('inputTitle');
+    var modeHint = document.getElementById('modeHint');
+    var submitBtn = document.getElementById('submitBtn');
+    var contextField = document.getElementById('contextField');
+    var ideaInput = document.getElementById('ideaInput');
+
+    if (mode === 'trash') {
+      trashTab.classList.add('active');
+      dialTab.classList.remove('active');
+      trashScene.classList.remove('hidden');
+      dialScene.classList.add('hidden');
+      inputArea.classList.remove('dial-mode');
+      inputArea.classList.add('trash-mode');
+      inputTitle.textContent = 'What should we stop doing?';
+      modeHint.textContent = "Something we do as a faculty that isn't necessary anymore? Toss it in the trash.";
+      submitBtn.textContent = 'Toss It!';
+      submitBtn.classList.remove('dial-style');
+      submitBtn.classList.add('trash-style');
+      contextField.classList.remove('show');
+      ideaInput.placeholder = "e.g. 'Weekly reports that nobody reads...'";
+    } else {
+      dialTab.classList.add('active');
+      trashTab.classList.remove('active');
+      dialScene.classList.remove('hidden');
+      trashScene.classList.add('hidden');
+      inputArea.classList.remove('trash-mode');
+      inputArea.classList.add('dial-mode');
+      inputTitle.textContent = 'What are we overinvesting in?';
+      modeHint.textContent = "Something we do well, but at a higher level of quality or effort than necessary? We're not eliminating it \u2014 just finding the right level.";
+      submitBtn.textContent = 'Dial It Back!';
+      submitBtn.classList.remove('trash-style');
+      submitBtn.classList.add('dial-style');
+      contextField.classList.add('show');
+      ideaInput.placeholder = "e.g. 'Our assessment reports could be simpler...'";
+      // Reset dial to 10
+      resetDial();
+    }
+  }
+
+  function resetDial() {
+    var knob = document.getElementById('dialKnob');
+    var dialValue = document.getElementById('dialValue');
+    knob.style.transform = 'rotate(0deg)';
+    dialValue.textContent = '10';
+  }
+
+  function submitIdea() {
+    var ideaInput = document.getElementById('ideaInput');
+    var nameInput = document.getElementById('nameInput');
+    var contextInput = document.getElementById('contextInput');
+    var submitBtn = document.getElementById('submitBtn');
+    var submitStatus = document.getElementById('submitStatus');
+
+    var idea = ideaInput.value.trim();
+    if (!idea) {
+      ideaInput.style.borderColor = '#ff6b6b';
+      ideaInput.focus();
+      setTimeout(function() { ideaInput.style.borderColor = '#e0d4f5'; }, 1000);
+      return;
+    }
+
+    var name = nameInput.value.trim();
+    var context = (currentMode === 'dial') ? contextInput.value.trim() : '';
+
+    submitBtn.disabled = true;
+    submitStatus.textContent = '';
+    submitStatus.className = 'submit-status';
+
+    // Play animation
+    if (currentMode === 'trash') {
+      playTrashAnimation(idea);
+    } else {
+      playDialAnimation(idea);
+    }
+
+    // Send to Notion
+    if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+      console.log('Demo mode:', { idea: idea, name: name, type: currentMode, context: context });
+      submitStatus.textContent = 'Demo mode \u2014 connect Apps Script to save to Notion';
+      submitStatus.className = 'submit-status error';
+      return;
+    }
+
+    submitStatus.textContent = 'Saving...';
+    submitStatus.className = 'submit-status saving';
+
+    var type = (currentMode === 'trash') ? 'Trash It' : 'Dial It Back';
+    var url = APPS_SCRIPT_URL
+      + '?suggestion=' + encodeURIComponent(idea)
+      + '&name=' + encodeURIComponent(name)
+      + '&type=' + encodeURIComponent(type)
+      + '&context=' + encodeURIComponent(context);
+
+    fetch(url, { mode: 'no-cors', credentials: 'omit' })
+      .then(function() {
+        submitStatus.textContent = '';
+      })
+      .catch(function(err) {
+        console.error('Submit error:', err);
+        submitStatus.textContent = 'Could not reach server \u2014 tell Andrew!';
+        submitStatus.className = 'submit-status error';
+      });
+  }
+
+  function playTrashAnimation(idea) {
+    var ideaInput = document.getElementById('ideaInput');
+    var trashCan = document.getElementById('trashCan');
+    var submitBtn = document.getElementById('submitBtn');
+
+    var paper = document.createElement('div');
+    paper.className = 'flying-paper';
+    paper.textContent = idea.length > 30 ? idea.substring(0, 30) + '...' : idea;
+
+    var inputRect = ideaInput.getBoundingClientRect();
+    paper.style.left = (inputRect.left + inputRect.width / 2 - 30) + 'px';
+    paper.style.top = inputRect.top + 'px';
+    document.body.appendChild(paper);
+
+    var trashRect = trashCan.getBoundingClientRect();
+    var trashCenterX = trashRect.left + trashRect.width / 2 - 30;
+    var trashTopY = trashRect.top + 10;
+
+    trashCan.classList.add('open');
+
+    var startX = parseFloat(paper.style.left);
+    var startY = parseFloat(paper.style.top);
+    var duration = 800;
+    var animStart = performance.now();
+
+    function animate(currentTime) {
+      var elapsed = currentTime - animStart;
+      var progress = Math.min(elapsed / duration, 1);
+      var ease = 1 - Math.pow(1 - progress, 3);
+
+      var x = startX + (trashCenterX - startX) * ease;
+      var y = startY + (trashTopY - startY) * ease + (-200) * Math.sin(Math.PI * progress);
+
+      paper.style.left = x + 'px';
+      paper.style.top = y + 'px';
+      paper.style.transform = 'rotate(' + (progress * 720) + 'deg) scale(' + (1 - progress * 0.5) + ')';
+      paper.style.opacity = 1 - progress * 0.3;
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        paper.remove();
+        trashCan.classList.remove('open');
+        trashCan.classList.add('wobble');
+        setTimeout(function() { trashCan.classList.remove('wobble'); }, 600);
+
+        createConfetti(trashCenterX + 30, trashTopY, 'trash');
+
+        trashCount++;
+        document.getElementById('trashCount').textContent = trashCount;
+        var badge = document.getElementById('trashCounter');
+        badge.classList.add('bump');
+        setTimeout(function() { badge.classList.remove('bump'); }, 500);
+
+        showSuccess('trash', trashMessages);
+        addChip(idea, 'trash');
+        finishSubmit();
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function playDialAnimation(idea) {
+    var ideaInput = document.getElementById('ideaInput');
+    var dialContainer = document.getElementById('dialContainer');
+    var dialKnob = document.getElementById('dialKnob');
+    var dialValue = document.getElementById('dialValue');
+    var submitBtn = document.getElementById('submitBtn');
+
+    // Paper flies to dial
+    var paper = document.createElement('div');
+    paper.className = 'flying-paper';
+    paper.textContent = idea.length > 30 ? idea.substring(0, 30) + '...' : idea;
+
+    var inputRect = ideaInput.getBoundingClientRect();
+    paper.style.left = (inputRect.left + inputRect.width / 2 - 30) + 'px';
+    paper.style.top = inputRect.top + 'px';
+    document.body.appendChild(paper);
+
+    var dialRect = dialContainer.getBoundingClientRect();
+    var dialCenterX = dialRect.left + dialRect.width / 2 - 30;
+    var dialCenterY = dialRect.top + dialRect.height / 2 - 35;
+
+    var startX = parseFloat(paper.style.left);
+    var startY = parseFloat(paper.style.top);
+    var duration = 600;
+    var animStart = performance.now();
+
+    function animateFly(currentTime) {
+      var elapsed = currentTime - animStart;
+      var progress = Math.min(elapsed / duration, 1);
+      var ease = 1 - Math.pow(1 - progress, 3);
+
+      var x = startX + (dialCenterX - startX) * ease;
+      var y = startY + (dialCenterY - startY) * ease + (-150) * Math.sin(Math.PI * progress);
+
+      paper.style.left = x + 'px';
+      paper.style.top = y + 'px';
+      paper.style.transform = 'rotate(' + (progress * 360) + 'deg) scale(' + (1 - progress * 0.3) + ')';
+      paper.style.opacity = 1 - progress * 0.5;
+
+      if (progress < 1) {
+        requestAnimationFrame(animateFly);
+      } else {
+        paper.remove();
+        // Now animate the dial turning down
+        animateDialDown();
+      }
+    }
+    requestAnimationFrame(animateFly);
+
+    function animateDialDown() {
+      var turnDuration = 800;
+      var turnStart = performance.now();
+      var startRotation = 0;
+      var endRotation = -200; // Turn counter-clockwise
+
+      function turnDial(currentTime) {
+        var elapsed = currentTime - turnStart;
+        var progress = Math.min(elapsed / turnDuration, 1);
+        // Bouncy easing
+        var ease = 1 - Math.pow(1 - progress, 3);
+
+        var rotation = startRotation + (endRotation - startRotation) * ease;
+        dialKnob.style.transform = 'rotate(' + rotation + 'deg)';
+
+        // Update value display
+        var val = Math.round(10 - (10 * ease * 0.5));
+        if (val < 5) val = 5;
+        dialValue.textContent = val;
+
+        if (progress < 1) {
+          requestAnimationFrame(turnDial);
+        } else {
+          dialValue.textContent = '5';
+          dialContainer.classList.add('pulse');
+          setTimeout(function() { dialContainer.classList.remove('pulse'); }, 500);
+
+          createConfetti(dialCenterX + 30, dialCenterY, 'dial');
+
+          dialCount++;
+          document.getElementById('dialCount').textContent = dialCount;
+          var badge = document.getElementById('dialCounter');
+          badge.classList.add('bump');
+          setTimeout(function() { badge.classList.remove('bump'); }, 500);
+
+          showSuccess('dial', dialMessages);
+          addChip(idea, 'dial');
+          finishSubmit();
+
+          // Reset dial after a moment
+          setTimeout(function() { resetDial(); }, 1500);
+        }
+      }
+      requestAnimationFrame(turnDial);
+    }
+  }
+
+  function finishSubmit() {
+    var ideaInput = document.getElementById('ideaInput');
+    var contextInput = document.getElementById('contextInput');
+    var submitBtn = document.getElementById('submitBtn');
+    ideaInput.value = '';
+    contextInput.value = '';
+    submitBtn.disabled = false;
+    ideaInput.focus();
+  }
+
+  function showSuccess(type, messages) {
+    var successMsg = document.getElementById('successMsg');
+    var msg = messages[Math.floor(Math.random() * messages.length)];
+    successMsg.textContent = msg;
+    successMsg.className = 'success-msg ' + type + '-msg show';
+    setTimeout(function() { successMsg.classList.remove('show'); }, 2000);
+  }
+
+  function addChip(idea, type) {
+    var recentTosses = document.getElementById('recentTosses');
+    var tossList = document.getElementById('tossList');
+    recentTosses.style.display = 'block';
+    var chip = document.createElement('div');
+    chip.className = 'toss-chip ' + type + '-chip';
+    var icon = (type === 'trash') ? '\u{1F5D1}' : '\u{1F50A}';
+    chip.innerHTML = '<span class="chip-icon">' + icon + '</span> ' +
+      (idea.length > 35 ? idea.substring(0, 35) + '...' : idea);
+    tossList.insertBefore(chip, tossList.firstChild);
+    while (tossList.children.length > 10) {
+      tossList.removeChild(tossList.lastChild);
+    }
+  }
+
+  function createConfetti(x, y, type) {
+    var colors = (type === 'trash')
+      ? ['#ff6b6b', '#ffd700', '#ff9ff3', '#fd79a8', '#fdcb6e']
+      : ['#48dbfb', '#0abde3', '#a29bfe', '#dfe6e9', '#74b9ff'];
+    var container = document.getElementById('confettiContainer');
+
+    for (var i = 0; i < 25; i++) {
+      var piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      var color = colors[Math.floor(Math.random() * colors.length)];
+      var size = 6 + Math.random() * 8;
+
+      piece.style.width = size + 'px';
+      piece.style.height = size + 'px';
+      piece.style.left = x + 'px';
+      piece.style.top = y + 'px';
+      if (Math.random() > 0.5) { piece.style.borderRadius = '50%'; }
+      piece.style.background = color;
+      container.appendChild(piece);
+
+      (function(p, sx, sy) {
+        var angle = Math.random() * Math.PI * 2;
+        var velocity = 150 + Math.random() * 250;
+        var vx = Math.cos(angle) * velocity;
+        var vy = Math.sin(angle) * velocity - 200;
+        var rotSpeed = (Math.random() - 0.5) * 800;
+        var start = performance.now();
+
+        function anim(now) {
+          var t = (now - start) / 1000;
+          if (t > 2) { p.remove(); return; }
+          p.style.left = (sx + vx * t) + 'px';
+          p.style.top = (sy + vy * t + 300 * t * t) + 'px';
+          p.style.transform = 'rotate(' + (rotSpeed * t) + 'deg)';
+          p.style.opacity = Math.max(0, 1 - t / 2);
+          requestAnimationFrame(anim);
+        }
+        requestAnimationFrame(anim);
+      })(piece, x, y);
+    }
+  }
+
+  // Event listeners
+  document.getElementById('submitBtn').addEventListener('click', function() {
+    submitIdea();
+  });
+
+  document.getElementById('ideaInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitIdea();
+    }
+  });
+
+  document.getElementById('trashCan').addEventListener('click', function() {
+    this.classList.add('wobble');
+    var self = this;
+    setTimeout(function() { self.classList.remove('wobble'); }, 600);
+  });
+</script>
+
+</body>
+</html>
